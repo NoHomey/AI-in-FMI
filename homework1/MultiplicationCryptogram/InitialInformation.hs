@@ -70,8 +70,8 @@ initialInformation problem = let rangs = computeRangs $ AssocList.fromList $ map
 
                     fill n = replicate n $ Left 0                   
 
-          computeRangs rangs = let updateRangsInfo = [(left, 1), (right, 2), (result, 4)] ++ (map (\intermediate -> (intermediate, 3)) intermediate)
-                                   updatedRangs = foldr (\(variables, rang) rangs -> updateRangs rangs variables rang) rangs updateRangsInfo
+          computeRangs rangs = let updateRangsInfo = [(left, 1), (right, 2)] ++ (map (\intermediate -> (intermediate, 3)) intermediate) ++ [(result, 4)]
+                                   updatedRangs = foldl (\rangs (variables, rang) -> updateRangs rangs variables rang) rangs updateRangsInfo
                                    fillsCount = sum $ map length $ [left, right, result] ++ intermediate
                                in AssocList.fromList $ map (fmap (\(count, rang, index) -> (fillsCount - count, rang, index))) $ AssocList.list updatedRangs
               where updateRangs rangs variables rang = fst $ foldr (updateRangsWithVariable rang) (rangs, 1) variables
@@ -95,4 +95,3 @@ initialInformation problem = let rangs = computeRangs $ AssocList.fromList $ map
                                              in AssocList.update one [1] reducedDomains
 
                     reduceDomain variable domains = AssocList.update variable [2, 3, 4] domains
-          
