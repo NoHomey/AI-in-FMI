@@ -11,6 +11,7 @@ class Map map where
 
     update :: Ord key => key -> value -> map key value -> map key value
     update = insert
+    
     delete :: Ord key => key -> map key value -> map key value
 
     valueOf :: Ord key => key -> map key value -> Maybe value
