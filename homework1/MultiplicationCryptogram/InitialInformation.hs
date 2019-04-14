@@ -11,7 +11,7 @@ initialInformation :: Problem.Problem Constraint.Variable -> ( [(Constraint.Cons
                                                              , AssocList.AssocList Constraint.Variable [Int]
                                                              )
 initialInformation problem = let rangs = computeRangs $ AssocList.fromList $ map (\variable -> (variable, (0, 0, 0))) variables
-                                 constraints = map (\constraint -> (constraint, Constraint.variables constraint)) $ allDiffConstraints ++ multiplicationConstraints
+                                 constraints = map (\constraint -> (constraint, Constraint.variables constraint)) $ concat [allDiffConstraints, multiplicationConstraints, sumConstraints]
                                  domains = reduceDomains $ AssocList.fromList $ map (\variable -> (variable, [1..9])) variables
                              in (constraints, rangs, domains)
     where left = Problem.left problem
@@ -49,6 +49,26 @@ initialInformation problem = let rangs = computeRangs $ AssocList.fromList $ map
                     modConstraint multiplier (left, result) (constraints, n) = ((constraint multiplier left (Constraint.EqualMod n) result):constraints, 10 * n)
 
                     number digits = Constraint.Number $ map Right digits
+
+          sumConstraints = let resultLength = length result
+                               matrix = fst $ foldr (\row (matrix, offset) -> (((fill $ resultLength - (length row + offset)) ++ (map Right row) ++ (fill offset)):matrix, offset - 1)) ([], resultLength - (length $ last intermediate)) intermediate
+                               columnsTails = init $ init $ tail $ tails $ columns matrix
+                               resultTails = init $ init $ tail $ tails result
+                               sumModConstraints = fst $ foldr modConstraints ([], 100) $ zip columnsTails resultTails
+                               sumAllConstraint = constraint matrix Constraint.Equal $ map Right result
+                           in sumAllConstraint:sumModConstraints
+              where constraint numbers equation result = Constraint.Constraint (Constraint.Sum $ map Constraint.Number numbers) equation (Constraint.Number result)
+                  
+                    modConstraints (columns, result) (constraints, n) = ((constraint (matrixFromColumns columns) (Constraint.EqualMod n) (map Right result)):constraints, 10 * n)
+
+                    columns matrix = if all null matrix
+                                       then []
+                                       else (map head matrix):(columns $ map tail matrix)
+
+                    matrixFromColumns [column] = map (\element -> [element]) column
+                    matrixFromColumns (head:tail) = zipWith (:) head $ matrixFromColumns tail
+
+                    fill n = replicate n $ Left 0                   
 
           computeRangs rangs = let updateRangsInfo = [(left, 1), (right, 2), (result, 4)] ++ (map (\intermediate -> (intermediate, 3)) intermediate)
                                    updatedRangs = foldr (\(variables, rang) rangs -> updateRangs rangs variables rang) rangs updateRangsInfo

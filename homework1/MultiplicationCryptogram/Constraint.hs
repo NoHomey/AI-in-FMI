@@ -16,7 +16,7 @@ import Data.Maybe
 
 data Variable = A | B | C | D | E | F | G | H | I deriving (Eq, Ord, Show)
 
-data Expression = Constant Int | Variable Variable | Number [Either Int Variable] | Multiplication Expression Expression deriving (Show, Eq)
+data Expression = Constant Int | Variable Variable | Number [Either Int Variable] | Multiplication Expression Expression | Sum [Expression] deriving (Show, Eq)
 
 data Equation = Diff | Equal | EqualMod Int deriving (Show, Eq)
 
@@ -38,7 +38,11 @@ instance SolverConstraint.Constraint Constraint Variable Int where
                                                                                  in if isConstant bindedLeft && isConstant bindedRight
                                                                                       then Constant $ (valueOfConstant bindedLeft) * (valueOfConstant bindedRight)
                                                                                       else Multiplication bindedLeft bindedRight
-                                                                                      
+              bindValuesOfExpression (Sum expressions)              evaluation = let bindedExpressions = map (\expression -> bindValuesOfExpression expression evaluation) expressions
+                                                                                 in if all isConstant bindedExpressions
+                                                                                      then Constant $ sum $ map valueOfConstant bindedExpressions
+                                                                                      else Sum bindedExpressions
+
               bindValueOfDigit _          digit@(Left _)         = digit
               bindValueOfDigit evaluation digit@(Right variable) = maybe digit Left $ SolverMap.valueOf variable evaluation
 
@@ -57,14 +61,16 @@ instance SolverConstraint.Constraint Constraint Variable Int where
               eval (Variable variable)         evaluation = SolverMap.value variable evaluation
               eval (Number digits)             evaluation = toNum $ map (evalDigit evaluation) digits
               eval (Multiplication left right) evaluation = (eval left evaluation) * (eval right evaluation)
+              eval (Sum expressions)           evaluation = sum $ map (\expression -> eval expression evaluation) expressions
 
               evalDigit evaluation digit = either id (\variable -> SolverMap.value variable evaluation) digit 
 
 variables :: Constraint -> [Variable]
-variables (Constraint left equation right) = nub $ twoExpressionsVariables left right
+variables (Constraint left equation right) = twoExpressionsVariables left right
     where expressionVariables (Constant _)                = []
           expressionVariables (Variable variable)         = [variable]
           expressionVariables (Number digits)             = concatMap (either (const []) pure) digits
           expressionVariables (Multiplication left right) = twoExpressionsVariables left right
-          
-          twoExpressionsVariables left right = (expressionVariables left) ++ (expressionVariables right)
+          expressionVariables (Sum expressions)           = nub $ concatMap expressionVariables expressions
+
+          twoExpressionsVariables left right = nub $ (expressionVariables left) ++ (expressionVariables right)
