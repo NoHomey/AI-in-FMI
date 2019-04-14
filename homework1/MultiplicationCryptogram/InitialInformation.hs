@@ -92,10 +92,11 @@ initialInformation problem = let rangs = computeRangs $ AssocList.fromList $ map
                                                                 then AssocList.update lastLeft [1, 3, 5, 6, 7, 9] domains
                                                                 else domains
 
-                    reduceWhenFoundOne domains one = let reduceDomainsToRightVariables = map fst $ filter ((length left ==) . length . snd) $ zip reversedRight intermediate
+                    reduceWhenFoundOne domains one = let reduceDomainsToRightVariables = map fst $ filter (condition one) $ zip reversedRight intermediate
                                                          reduceDomainsToVariables = if null reduceDomainsToRightVariables then [] else (head left):reduceDomainsToRightVariables
                                                          reducedDomains = foldr reduceDomain domains reduceDomainsToVariables
                                                      in AssocList.update one [1] reducedDomains
+                    condition one (variable, intermediate) = (length left == length intermediate) && (variable /= one) && (head left /= one)
 
                     reduceDomain variable domains = AssocList.update variable [2, 3, 4] domains
           
