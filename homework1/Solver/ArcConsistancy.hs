@@ -71,4 +71,5 @@ graphFromArcConstraints variables constraints = SolverMap.fromKeys links variabl
           isInConstraintVariables variable (Link a b) = a == variable || b == variable
           
           link variable (constraint, linkedVariables) = (linkTo variable linkedVariables, constraint)
+          
           linkTo variable (Link a b) = if variable == a then b else a
