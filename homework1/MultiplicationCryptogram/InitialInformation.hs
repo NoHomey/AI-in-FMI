@@ -88,7 +88,7 @@ initialInformation problem = let rangs = computeRangs $ AssocList.fromList $ map
               where findOne = fmap fst $ find ((left ==) . snd) $ zip reversedRight intermediate
                    
                     reduceDomainOfLastFromLeftIfPossible = let lastLeft = last left
-                                                           in if right == map last intermediate
+                                                           in if any (\(x, y) -> x == y) $ zip reversedRight $ map last intermediate
                                                                 then AssocList.update lastLeft [1, 3, 5, 6, 7, 9] domains
                                                                 else domains
 
@@ -98,3 +98,4 @@ initialInformation problem = let rangs = computeRangs $ AssocList.fromList $ map
                                                      in AssocList.update one [1] reducedDomains
 
                     reduceDomain variable domains = AssocList.update variable [2, 3, 4] domains
+          
