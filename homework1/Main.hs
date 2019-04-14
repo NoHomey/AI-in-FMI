@@ -20,15 +20,6 @@ instance SolverMap.Map AssocList.AssocList where
 solve :: Problem.Problem Constraint.Variable -> [AssocList.AssocList Constraint.Variable Int]
 solve = solveCSP initialInformation 
 
-problem :: Problem.Problem Constraint.Variable
-problem = Problem.Problem { Problem.left = [Constraint.A, Constraint.A]
-                          , Problem.right = [Constraint.B, Constraint.B]
-                          , Problem.intermediate = [ [Constraint.B, Constraint.B] 
-                                                   , [Constraint.B, Constraint.B]
-                                                   ]
-                          , Problem.result = [Constraint.B, Constraint.C, Constraint.B]
-                          }
-
 mainProblem :: Problem.Problem Constraint.Variable
 mainProblem = Problem.Problem { Problem.left = [Constraint.A, Constraint.B, Constraint.C]
                               , Problem.right = [Constraint.D, Constraint.E, Constraint.B]
@@ -39,6 +30,5 @@ mainProblem = Problem.Problem { Problem.left = [Constraint.A, Constraint.B, Cons
                               , Problem.result = [Constraint.E, Constraint.D, Constraint.B, Constraint.D, Constraint.F, Constraint.C]
                               }
 
-main = do
-         mapM_ print $ solve problem
-         --mapM_ print $ solve mainProblem
+main :: IO ()                              
+main = mapM_ print $ solve mainProblem
