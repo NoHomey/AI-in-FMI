@@ -1,0 +1,543 @@
+\documentclass[a4paper, 12pt]{article}
+    
+\usepackage[left=1cm,right=1cm,top=1cm,bottom=2cm]{geometry}
+\usepackage{amsmath,amsthm}
+\usepackage{mathtools}
+\usepackage{amssymb}
+\usepackage{lipsum}
+\usepackage[T1, T2A]{fontenc}
+\usepackage[utf8]{inputenc}
+\usepackage[bulgarian]{babel}
+\usepackage[normalem]{ulem}
+\usepackage{titlesec}
+\usepackage{algpseudocode}
+\usepackage{algorithm}
+\usepackage{algorithmicx}
+\newcommand{\univname}{Софиийски университет "Св. Климент Охридски"\\Факултет по математика и информатика}
+
+\usepackage{hyperref}
+\hypersetup{
+    colorlinks=true,
+    linkcolor=blue,
+    filecolor=magenta,      
+    urlcolor=cyan,
+}
+
+\setlength{\parindent}{0mm}
+
+\begin{document}
+\begin{titlepage}
+\begin{center}
+    
+\vspace*{.06\textheight}
+{\scshape\large \univname\par}\vspace{1.5cm}
+
+{\huge \bfseries{Домашна работа 2}\par}\vspace{0.7cm}
+\textsc{\small по}\\[0.6cm]
+\textsc{\Large Изкуствен Интелект}\\[0.5cm]
+\textsc{\normalsize спец. Информатика, 3 курс, летен семестър,}\\[0.5cm]
+\textsc{\normalsize учебна година 2018/19}\\[0.6cm]
+\textsc{\large Тема: Клъстеризация с помощта на метода k-Means}\\[3cm]
+     
+\begin{minipage}[t]{0.4\textwidth}
+\begin{flushleft} \large
+{\large \today}\\[1cm]
+София
+\end{flushleft}
+\end{minipage}
+\begin{minipage}[t]{0.4\textwidth}
+\begin{flushright} \large
+\emph{Изготвил:}\\[0.5cm]
+Иво Алексеев Стратев\\[0.5cm]
+Фак. номер: 45342\\[0.2cm]
+Група: 3
+\end{flushright}
+\end{minipage}
+\end{center}
+\end{titlepage}
+\tableofcontents
+\pagebreak
+\section{Задача}
+Входните данни са добре известното множество "Iris". Първоначално това множество
+е публикувано в UCI Machine Learning Repository: Iris Data Set. Всеки ред на
+таблицата описва цвете ирис, представено с размерите на неговите ботанически
+части в сантиметри. Таблицата включва описания на 150 примера в термините на 4
+атрибута. Представящи ботаническите параметри на цветето.
+(\url{http://archive.ics.uci.edu/ml/datasets/Iris}).
+
+
+Задачата е да се имплементира метода k-Means за групиране на примерите от това
+множество в три клъстера. Използвайки атрибутите:
+sepal length, sepal width, petal length и petal width.
+Множеството съдържа и класови атрибут, които групира примерите в три класа:
+Iris Setosa, Iris Versicolour и Iris Virginica.
+След, което да сравнят примерите във всеки от получените клъстери с вече известните класове.
+Да се използват поне две различни функции за определяне на разстоянието и да определете
+коя е по-точната за това множество от данни. 
+\section{Описание на използвания метод за решаване на задачата}
+Имплементацията на клъстеризиращия алгоритъм представлява оптимизирана версия на алгоритъма k-Means.
+Оптимизациите са две:
+\begin{itemize}
+\item използва се детерминистична инициализираща фаза, вместо типичните рандомизирани инициализации с цел подобрябване на сходимостта на алгоритъма.
+\item стъпката е паралелна, като точките не се разделят, смятат се само новите центроиди. Точките се разделят само в завършителната фаза на реализацията.
+\end{itemize}
+\subsection{Класическа версия на алгоритъма k-Means}
+В алгоритъма k е броят на клъстерите, на които искаме да разделим входните данни.
+Центроид наричаме центъра на всеки клъстер. Той може да бъде намерен чрез използването на различни статистически или псевдостатистически функции.
+За алгоритъма това е средната точка на клъстера. Тоест математическата функция е \(mean\).
+Понеже алгоритъма е многомерен, то функцията е покомпонентна. Тоест стойността във всяка компонента е средната стойност на съответната компонента на точките от клъстера.
+\begin{align*}
+    Mean(C) = \displaystyle\frac{1}{|C|} \displaystyle\sum_{p \in C} p
+\end{align*}
+\subsubsection{Инициализираща фаза}
+Цели да инициализира центроидите.
+Обикновенно се ползват рандомизирани стратегии.
+Две от най-известните стратегии са:
+\begin{itemize}
+\item На произволен принцип се избират k точки от множеството.
+\item На всяка точка по произволен начин се съпоставя клъстер,
+след което се смятат центроидите на всеки от получените клъстери.
+\end{itemize}
+\subsubsection{Стъпка}
+Докато не настъпи определено събитие се повтаря следната логика:
+Взимат се k празни множества, представляващи всеки клъстер.
+Всяко множество съотвества на точно един центроид.
+За всяка точка се пресмята разтоянието да всеки центроид.
+Точката се премества в съответния клъстер (множество).
+Пресмятат се медианите на всеки клъстер (множество).
+Това са новите центроиди. 
+Събитията обикновенно са:
+\begin{itemize}
+\item достигнат е определен брой итерации
+\item Във всеки клъстер по-малко от определен брой точки са били преместени
+\item Центроидите са се преместили на по-малко от определено разтояние
+\end{itemize}
+
+
+Следва подобронно описание на реализацията.
+\subsection{Инициализираща фаза}
+Тъйкато рандомизираните методи не гарантират по никакъв начин сходимостта на алгоритъма.
+То е използван следния подход за инициализация, който е със сложност \(\Theta(n)\),
+където \(n\) е броя на точките. Тоест сложността е същата като съпоставянето на произволен начин на клъстер.
+Вземат се първите k точки от множеството. Това са началните центроиди.
+След, което за всяка точка се пресмята разтоянието до всеки клъстер.
+Ако разтоянието между точката и някой клъстер е по-малко от разтоянието от някой центроид до друг,
+то се обновява някой центроид на най-късо разтояние до точката по формулата:
+\begin{align}
+    \left(\displaystyle\frac{|C_i|}{|C_i| + 1} . centroid(C_i)\right) + \left(\displaystyle\frac{1}{|C_i| + 1} . point\right) \label{updateMean1}
+\end{align}
+където \(C_i\) е избрания клъстер.
+Ако пък разтоянието от точката до всеки клъстер е по-голямо от разтоянията от всеки клъстер до всеки друг,
+то се избират два клъстера с минимално разтояние между тях, които да бъдат обединени.
+Като в резултат центроидите на двата клъстера се заменят с нов центроид пресмет по формулата:
+\begin{align}
+    \left(\displaystyle\frac{|C_i|}{|C_i| + |C_j|} . centroid(C_i)\right) + \left(\displaystyle\frac{|C_j|}{|C_i| + |C_j|} . centroid(C_j)\right) \label{updateMean2}
+\end{align}
+и се добавя нов клъстер с добавянето на нов центроид, който е разглежданата точка.
+\subsection{Стъпка}
+Лесно се забелязва, че в стъпката на оргиналния вариант на k-Means точките биват разделяни
+единствено за да могат да бъдат пресметнати новите центроиди.
+Но това е излишно понеже новите центроиди могат да бъдат пресметнати в движение.
+При това пресмятането на новите центроиди може да бъде извършено паралелно.
+За това стъпката в предложената реализация е следната:
+Множеството от точки се разделя на \(H\) части,
+за всяка част паралелно се пресмятат временните нови центроиди за съответната част.
+Тоест за всяка точка във фиксирана част се извършват следните стъпки.
+Намира се клъстера с най-късо разтояние на центроида си до точката, с най-малък брой точки в себе си.
+След което ако клъстера е празен, то временния нов центроид е точката.
+В противен случай се използва формула \ref{updateMean1} за обновяване на временния центроид.
+След като за всяка част бъдат намерени временните нови центроиди се обединяват по формулата:
+\begin{align}
+    \left(\displaystyle\frac{|temp_i|}{|current_i| + |temp_i|} . centroid(temp_i)\right) + \left(\displaystyle\frac{|current_i|}{|current_i| + |temp_i|} . centroid(current_i)\right) \label{updateMeanTmp}
+\end{align}
+Където \(temp_i\) съотвества временния клъстер резултат от обединението на центроидите или празното множество.
+\(current_i\) е клъстера съотвестваш на i-тия центроид от някоя част.
+Пълната формула, по която се пресмятат новия i-ти центроид съотвестваш на текущия i-ти центроид е:
+\begin{align}
+    \displaystyle\sum_{j = 1}^H \displaystyle\frac{|temp_{ji}|}{n} . centroid(temp_{ji})\label{newMeans}
+\end{align}
+Където \(temp_{ji}\) съотвества на получения центроид съотвестваш на i-тия досегашен центроид от j-тата част.
+\subsection{Финална фаза}
+Точките се разпределят в k клъстера спрямо това до кой центроид се намират най-близо.
+В реализацията клъстер представлява масив от индекси.
+Всеки индекс е идексът на съответната точка от входния масив с точки.
+\section{описание на реализацията с псевдокод}
+Ще използваме следните константи:
+\begin{itemize}
+\item K - брой клъстери (центроиди)
+\item N - размерност на точките (брой координати)
+\item I - максимален брой итерации
+\item H - брой нишки (части, на които да се разделят входните данни)
+\item e - достатъчно малко число избрано от потребителя
+\end{itemize}
+\begin{algorithm}[H]
+\begin{algorithmic}[1]
+\Function{k\_means}{points}
+\State \(means \gets \Call{initialMeans}{points}\)
+\For{\(i \gets 1 \; \textbf{to} \; I\)}
+\State \(newMeans \gets \Call{centroids}{points, means}\)
+\If{\(\Call{areClose}{newMeans, means}\)}
+\textbf{break}
+\EndIf
+\State \(means \gets newMeans\)
+\EndFor 
+\State \Return \(\Call{partition}{points, means}\)
+\EndFunction
+\end{algorithmic}
+\end{algorithm}
+\begin{algorithm}[H]
+\begin{algorithmic}[1]
+\Function{initialMeans}{points}
+\State \(means \gets \Call{firstAsMeans}{points}\)
+\State \(dists \gets \Call{meansDists}{means}\)
+\State \(minDist \gets \Call{minMeansDist}{dists}\)
+\State \(count \gets points.size\)
+\For{\(i \gets k + 1 \; \textbf{to} \; count\)}
+\State \(point \gets points[i]\)
+\State \(distsFromPointToMeans \gets \Call{distsToMeans}{point, means}\)
+\State \(minDistPoint \gets \Call{minDistToMeans}{distsFromPointToMeans}\)
+\If{\(minDistPoint.dist < distOfMinDist.dist\)}
+\State \(\Call{updateMeansWithPoint}{means, dists, minDist, point, minDistPoint.toCentroid}\)
+\Else
+\State \(\Call{updateMeansWithMerge}{means, dists, minDist, point, distsFromPointToMeans}\)
+\EndIf
+\EndFor
+\State \Return means
+\EndFunction
+\end{algorithmic}
+\end{algorithm}
+\begin{algorithm}[H]
+\begin{algorithmic}[1]
+\Function{centroids}{points, means}
+\State \(partMeans \gets \Call{portionMeans}{points, means}\)
+\State \Return \(\Call{newMeansFromPortionMeans}{partMeans}\)
+\EndFunction
+\end{algorithmic}
+\end{algorithm}
+\begin{algorithm}[H]
+\begin{algorithmic}[1]
+\Function{areClose}{means1, means2}
+\ForAll{mean : means1}
+\If{\(\textbf{not} \; \Call{hasClose}{mean, means}\)}
+\State \Return \textbf{false}
+\EndIf
+\EndFor
+\State \Return \textbf{true}
+\EndFunction
+\end{algorithmic}
+\end{algorithm}
+\begin{algorithm}[H]
+\begin{algorithmic}[1]
+\Function{partition}{points, means}
+\State \(clusters[K]\)
+\For{\(i \gets 1 \; \textbf{to} \; K\)}
+\State \(clusters[i].centroid \gets means[i].centroid\)
+\EndFor
+\State \(count \gets points.size\)
+\For{\(index \gets 1 \; \textbf{to} \; count\)}
+\State \(point \gets points[index]\)
+\State \(centroidIndex \gets 1\)
+\State \(d \gets \Call{dist}{point, means[1].centroid}\)
+\For{\(j \gets 2 \; \textbf{to} \; K\)}
+\State \(dj \gets \Call{dist}{point, means[j].centroid}\)
+\If{\(dj < d \lor dj = d \land clusters[j].size < clusters[centroidIndex].size\)}
+    \State \(centroidIndex \gets j\)
+    \State \(d \gets dj\)
+\EndIf
+\EndFor
+\State \Call{push}{clusters[centroidIndex].indeces, index}
+\EndFor
+\State \Return clusters
+\EndFunction
+\end{algorithmic}
+\end{algorithm}
+\begin{algorithm}[H]
+\begin{algorithmic}[1]
+\Function{firstAsMeans}{points}
+\State \(means[K]\)
+\For{\(i \gets 1 \; \textbf{to} \; K\)}
+\State \(means[K] \gets \Call{pointMean}{points[i]}\)
+\EndFor
+\State \Return means
+\EndFunction
+\end{algorithmic}
+\end{algorithm}
+\begin{algorithm}[H]
+\begin{algorithmic}[1]
+\Function{meansDists}{means}
+\State \(dists[K][K]\)
+\For{\(i \gets 1 \; \textbf{to} \; K\)}
+\For{\(j \gets 1 \; \textbf{to} \; i - 1\)}
+\State \(d \gets \Call{dist}{means[i].centroid, means[j].centroid}\)
+\State \(dists[i][j] \gets d\)
+\State \(dists[j][i] \gets d\)
+\EndFor
+\State \(dists[i][i] \gets 0\)
+\EndFor
+\State \Return dists
+\EndFunction
+\end{algorithmic}
+\end{algorithm}
+\begin{algorithm}[H]
+\begin{algorithmic}[1]
+\Function{minMeansDist}{dists}
+\State \(from \gets 1\)
+\State \(to \gets 2\)
+\State \(d \gets dists[from][to]\)
+\For{\(i \gets 1 \; \textbf{to} \; K\)}
+\For{\(j \gets 1 \; \textbf{to} \; i - 1\)}
+\If{\(dists[i][j] < d\)}
+\State \(from \gets i\)
+\State \(to \gets j\)
+\State \(d \gets dists[from][to]\)
+\EndIf
+\EndFor
+\EndFor
+\State \Return \(<from, to, d>\)
+\EndFunction
+\end{algorithmic}
+\end{algorithm}
+\begin{algorithm}[H]
+\begin{algorithmic}[1]
+\Function{distsToMeans}{point, means}
+\State \(dists[K]\)
+\For{\(i \gets 1 \; \textbf{to} \; K\)}
+\State \(dists[i] \gets \Call{dist}{point, means[i].centroid}\)
+\EndFor
+\State \Return dists
+\EndFunction
+\end{algorithmic}
+\end{algorithm}
+\begin{algorithm}[H]
+\begin{algorithmic}[1]
+\Function{minDistToMeans}{dists}
+\State \(to \gets 1\)
+\State \(d \gets dists[to]\)
+\For{\(i \gets 2 \; \textbf{to} \; K\)}
+\If{\(dists[i] < d\)}
+\State \(to \gets i\)
+\State \(d \gets dists[to]\)
+\EndIf
+\EndFor
+\State \Return \(<to, d>\)
+\EndFunction
+\end{algorithmic}
+\end{algorithm}
+\begin{algorithm}[H]
+\begin{algorithmic}[1]
+\Function{updateMeansWithPoint}{means, dists, minDist, point, centroidIndex}
+\State \(means[centroidIndex] \gets \Call{updateMean}{means[centroidIndex], point}\)
+\For{\(i \gets 1 \; \textbf{to} \; K\)}
+\If{\(i \neq centroidIndex\)}
+\State \(d \gets \Call{dist}{means[centroidIndex].centroid, means[i].centroid}\)
+\State \(dists[centroidIndex][i] \gets d\)
+\State \(dists[i][centroidIndex] \gets d\)
+\If{\(d < minDist.dist\)}
+\State \(minDist \gets <centroidIndex, i, d>\)
+\EndIf
+\EndIf
+\EndFor
+\EndFunction
+\end{algorithmic}
+\end{algorithm}
+\begin{algorithm}[H]
+\begin{algorithmic}[1]
+\Function{updateMeansWithMerge}{means, dists, minDist, point, distsToMeans}
+\State \(means[minDist.from] \gets \Call{mergeMeans}{means[minDist.from], means[minDist.to]}\)
+\State \(means[minDist.to] \gets \Call{pointMean}{point}\)
+\For{\(i \gets 1 \; \textbf{to} \; K\)}
+\If{\(i \neq minDist.from\)}
+\State \(d \gets \Call{dist}{means[minDist.from].centroid, point}\)
+\State \(dists[minDist.from][i] \gets d\)
+\State \(dists[i][minDist.from] \gets d\)
+\EndIf
+\If{\(i \neq minDist.to \land (i \neq minDist.from)\)}
+\State \(dists[minDist.to][i] \gets distsToMeans[i]\)
+\State \(dists[i][minDist.to] \gets dists[i][minDist.to]\)
+\EndIf
+\EndFor
+\State \(minDist \gets \Call{minDistToMeans}{dists}\)
+\EndFunction
+\end{algorithmic}
+\end{algorithm}
+\begin{algorithm}[H]
+\begin{algorithmic}[1]
+\Function{portionMeans}{points, means}
+\State \(portion \gets \displaystyle\frac{points.size}{H}\)
+\State \(futers[H]\)
+\For{\(i \gets 1 \; \textbf{to} \; H\)}
+\State \(start \gets (i - 1) * portion + 1\)
+\State \(end \gets start + portion\)
+\If{\(i = H\)}
+\State \(end \gets points.size\)
+\EndIf
+\State \(futers[i] \gets \Call{async}{task, points, means, start, end}\)
+\EndFor
+\State \Return futers
+\EndFunction
+\end{algorithmic}
+\end{algorithm}
+\begin{algorithm}[H]
+\begin{algorithmic}[1]
+\Function{newMeansFromPortionMeans}{futers}
+\State \(means \gets \Call{asyncResult}{futers[1]}\)
+\For{\(h \gets 2 \; \textbf{to} \; H\)}
+\State \(tempMeans \gets \Call{asyncResult}{futers[h]}\)
+\For{\(i \gets 1 \; \textbf{to} \; K\)}
+\If{\(means[i].size = 0 \land tempMeans[i].size \neq 0\)}
+\State \(means[i] \gets tempMeans[i]\)
+\Else
+\If{\(means[i].size \neq 0 \land tempMeans[i].size \neq 0\)}
+\State \(means[i] \gets \Call{mergeMeans}{means[i], tempMeans[i]}\)
+\EndIf
+\EndIf
+\EndFor
+\EndFor
+\State \Return means
+\EndFunction
+\end{algorithmic}
+\end{algorithm}
+\begin{algorithm}[H]
+\begin{algorithmic}[1]
+\Function{task}{points, means, start, end}
+\State \(tempMeans[K]\)
+\For{\(i \gets 1 \; \textbf{to} \; K\)}
+\State \(tempMeans[i].size \gets 0\)
+\EndFor
+\For{\(i \gets start \; \textbf{to} \; end\)}
+\State \(point \gets points[i]\)
+\State \(centroidIndex \gets 1\)
+\State \(d \gets \Call{dist}{point, means[centroidIndex].centroid}\)
+\For{\(j \gets 2 \; \textbf{to} \; K\)}
+\State \(dj \gets \Call{dist}{point, means[j].centroid}\)
+\If{\(dj < d \lor dj = d \land tempMeans[j].size < tempMeans[centroidIndex].size\)}
+    \State \(centroidIndex \gets j\)
+    \State \(d \gets dj\)
+\EndIf
+\EndFor
+\If{\(tempMeans[centroidIndex].size = 0\)}
+\State \(tempMeans[centroidIndex] \gets \Call{pointMean}{point}\)
+\Else
+\State \(tempMeans[centroidIndex] \gets \Call{updateMean}{tempMeans[centroidIndex], point}\)
+\EndIf
+\EndFor
+\State \Return tempMeans 
+\EndFunction
+\end{algorithmic}
+\end{algorithm}
+\begin{algorithm}[H]
+\begin{algorithmic}[1]
+\Function{hasClose}{mean, means}
+\For{\(i \gets 1 \; \textbf{to} \; K\)}
+\If{\(\Call{dist}{mean.centroid, means[i].centroid} < e\)}
+\State \Return \textbf{true}
+\EndIf
+\EndFor
+\State \Return \textbf{false}
+\EndFunction
+\end{algorithmic}
+\end{algorithm}
+\begin{algorithm}[H]
+\begin{algorithmic}[1]
+\Function{pointMean}{point}
+\State \Return \(<point, 1>\)
+\EndFunction
+\end{algorithmic}
+\end{algorithm}
+\begin{algorithm}[H]
+\begin{algorithmic}[1]
+\Function{updateMean}{mean, point}
+\State \(tempMean \gets \Call{pointMean}{point}\)
+\State \Return \Call{mergeMeans}{mean, tempMean}
+\EndFunction
+\end{algorithmic}
+\end{algorithm}
+\begin{algorithm}[H]
+\begin{algorithmic}[1]
+\Function{mergeMeans}{m1, m2}
+\State \(count \gets m1.size + m2.size\)
+\State \(a \gets \displaystyle\frac{m1.size}{count}\)
+\State \(b \gets \displaystyle\frac{m2.size}{count}\)
+\State \(m\)
+\For{\(i \gets 1 \; \textbf{to} \; K\)}
+\State \(m[i] \gets a . m1.centroid[i] + b . m2.centroid[i]\)
+\EndFor
+\State \Return \(<m, count>\)
+\EndFunction
+\end{algorithmic}
+\end{algorithm}
+\section{Инструкции за компилиране на програмата}
+На Linux базирана операционна система се нуждаете от \textbf{g++}, поне \textbf{5.4.0} версия.
+За компилиране се преместете в папката на сорс кода и от там изпълнете командата \textbf{make}.
+Тази команда ще стартира комипилирането на кода и ще създаде изходен файл \textbf{a.out}.
+За да изпълните изходния файл изпълнете командата \textbf{./a.out}.
+\section{Примерни резултати}
+Използвани са 6 различни функции за определяне на разтоянието.
+\begin{itemize}
+\item L1 дистанция известна още като Манхатанско разтояние.
+\begin{align*}
+    l1(x, y) = \displaystyle\sum_{i = 1}^d |x_i - y_i|
+\end{align*}
+\item L2 дистанция известна още като Евклидово разтояние.
+\begin{align*}
+    l2(x, y) = \displaystyle\sqrt{\displaystyle\sum_{i = 1}^d (x_i - y_i)^2}
+\end{align*}
+\item L3 дистанция.
+\begin{align*}
+    l3(x, y) = \left(\displaystyle\sum_{i = 1}^d |x_i - y_i|^3\right)^\frac{1}{3}
+\end{align*}
+\item L4 дистанция.
+\begin{align*}
+    l4(x, y) = \left(\displaystyle\sum_{i = 1}^d |x_i - y_i|^4\right)^\frac{1}{4}
+\end{align*}
+\item \(L_\infty\) дистанция.
+\begin{align*}
+    l_\infty(x, y) = \max\{|x_i - y_i| \; | \; i = 1, \dots, d\}
+\end{align*}
+\item S дистанция.
+\begin{align*}
+    s(x, y) = \displaystyle\sum_{i = 1}^d (x_i - y_i)^2
+\end{align*}
+\end{itemize}
+За всеки от получените клъстери се определя класа, който доминира в клъстера и се пресмята какво е отношението на точките от този клас към токчите в клъстера.
+За всяка дистанция се пресмята и оценяща функция на чистота на клъстеризацията.
+Наричана \(purity\) по следната формула:
+\begin{align*}
+    purity(\{C_1, C_2, C_3\}) = \displaystyle\frac{1}{n}\displaystyle\sum_{i = 1}^3\max\{|C_i \cap Class_l| \; | \; l \in \{Setosa, Versicolour, Virginica\}\}
+\end{align*}
+Тази функция дава оценка за качеството на клъстеризация.
+За всяка функция на разтояние се извежда името на фунцкия.
+След, което за всеки клъстер се намира броя на точките от доминиращия клас към размера на клъстера и се извежда името на доминиращия клас.
+Накрая се извежда стойността на \(purity\) функцията за това клъстеризирание.
+\subsection{Изходни резултати:}
+L1\\
+Virginica: 0.0540541\\
+Versicolor: 0.234375\\
+Setosa: 0\\
+0.887417\\
+L2\\
+Versicolor: 0.222222\\
+Setosa: 0\\
+Virginica: 0.0526316\\
+0.89404\\
+L3\\
+Versicolor: 0.222222\\
+Setosa: 0\\
+Virginica: 0.0526316\\
+0.89404\\
+L4\\
+Setosa: 0\\
+Virginica: 0.494949\\
+Setosa: 0.0454545\\
+0.662252\\
+L\_infinity\\
+Versicolor: 0.5\\
+Setosa: 0\\
+Setosa: 0.0232558\\
+0.662252\\
+S\\
+Versicolor: 0.222222\\
+Setosa: 0\\
+Virginica: 0.0526316\\
+0.89404
+\end{document}
